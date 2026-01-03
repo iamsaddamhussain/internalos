@@ -1,5 +1,7 @@
 <script setup>
 import { computed } from 'vue';
+import SearchableDropdown from './SearchableDropdown.vue';
+import MultiSelectDropdown from './MultiSelectDropdown.vue';
 
 const props = defineProps({
     schema: Object,
@@ -15,7 +17,12 @@ const fields = computed(() => props.schema.fields || []);
 
 <template>
     <div class="space-y-4">
-        <div v-for="field in fields" :key="field.id" class="form-group">
+        <div 
+            v-for="(field, index) in fields" 
+            :key="field.id" 
+            class="form-group" 
+            :class="{ 'relative z-30': field.type === 'relation' && index < fields.length - 1, 'relative z-20': field.type === 'relation' && index === fields.length - 1 }"
+        >
             <label :for="field.id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {{ field.label }}
                 <span v-if="field.required" class="text-red-500 dark:text-red-400">*</span>
@@ -99,23 +106,29 @@ const fields = computed(() => props.schema.fields || []);
                 </label>
             </div>
 
-            <!-- Relation -->
-            <select
-                v-else-if="field.type === 'relation'"
+            <!-- Relation (Single Select) -->
+            <SearchableDropdown
+                v-else-if="field.type === 'relation' && !field.multiple"
                 :id="field.id"
                 v-model="form[field.id]"
+                :options="relatedData[field.id]?.records || []"
+                :placeholder="`Select ${field.label}`"
                 :required="field.required"
-                class="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
-            >
-                <option value="">Select {{ field.label }}</option>
-                <option 
-                    v-for="record in relatedData[field.id]?.records || []" 
-                    :key="record.id" 
-                    :value="record.id"
-                >
-                    {{ record.display }}
-                </option>
-            </select>
+                value-key="id"
+                display-key="display"
+            />
+
+            <!-- Relation (Multiple Select) -->
+            <MultiSelectDropdown
+                v-else-if="field.type === 'relation' && field.multiple"
+                :id="field.id"
+                v-model="form[field.id]"
+                :options="relatedData[field.id]?.records || []"
+                :placeholder="`Select ${field.label}`"
+                :required="field.required"
+                value-key="id"
+                display-key="display"
+            />
 
             <!-- Error Message -->
             <div v-if="form.errors && form.errors[field.id]" class="text-red-600 dark:text-red-400 text-sm mt-1">

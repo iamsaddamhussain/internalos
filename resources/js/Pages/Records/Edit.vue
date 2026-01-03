@@ -36,8 +36,8 @@ const submit = () => {
 
         <div class="py-12">
             <div class="mx-auto max-w-2xl sm:px-6 lg:px-8">
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-6">
-                    <form @submit.prevent="submit">
+                <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
+                    <form @submit.prevent="submit" class="relative">
                         <DynamicForm
                             :schema="collection.schema"
                             :form="form"

@@ -87,7 +87,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Workspace routes
-    Route::resource('workspaces', WorkspaceController::class)->only(['index', 'create', 'store']);
+    Route::resource('workspaces', WorkspaceController::class)->only(['create', 'store']);
     Route::post('/workspaces/{workspace}/switch', [WorkspaceController::class, 'switch'])->name('workspaces.switch');
 
     // Collection routes (require active workspace)

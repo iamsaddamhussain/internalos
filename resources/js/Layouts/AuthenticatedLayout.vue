@@ -29,15 +29,6 @@ const isOwner = computed(() => {
     return userRole.value.slug === 'owner';
 });
 
-const switchWorkspace = (event) => {
-    if (event.target.value) {
-        router.post(`/workspaces/${event.target.value}/switch`, {}, {
-            preserveState: false,
-            preserveScroll: false,
-        });
-    }
-};
-
 const { initTheme } = useTheme();
 
 onMounted(() => {
@@ -94,32 +85,67 @@ onMounted(() => {
                                 >
                                     Permissions
                                 </NavLink>
-                                <NavLink
-                                    :href="route('workspaces.index')"
-                                    :active="route().current('workspaces.index')"
-                                >
-                                    Workspaces
-                                </NavLink>
                             </div>
                         </div>
 
                         <div class="hidden sm:ms-6 sm:flex sm:items-center space-x-4">
-                            <!-- Workspace Switcher -->
+                            <!-- Workspace Switcher Dropdown -->
                             <div v-if="workspaces.length > 0" class="relative">
-                                <select 
-                                    @change="switchWorkspace" 
-                                    :value="currentWorkspace?.id || ''"
-                                    class="border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm"
-                                >
-                                    <option value="">Select Workspace</option>
-                                    <option 
-                                        v-for="workspace in workspaces" 
-                                        :key="workspace.id"
-                                        :value="workspace.id"
-                                    >
-                                        {{ workspace.name }}
-                                    </option>
-                                </select>
+                                <Dropdown align="right" width="64">
+                                    <template #trigger>
+                                        <button
+                                            type="button"
+                                            class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none transition ease-in-out duration-150"
+                                        >
+                                            <span class="mr-2">{{ currentWorkspace?.name || 'Select Workspace' }}</span>
+                                            <svg
+                                                class="h-4 w-4"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                viewBox="0 0 20 20"
+                                                fill="currentColor"
+                                            >
+                                                <path
+                                                    fill-rule="evenodd"
+                                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                    clip-rule="evenodd"
+                                                />
+                                            </svg>
+                                        </button>
+                                    </template>
+
+                                    <template #content>
+                                        <div class="py-1">
+                                            <div class="px-4 py-2 text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
+                                                Switch Workspace
+                                            </div>
+                                            <button
+                                                v-for="workspace in workspaces"
+                                                :key="workspace.id"
+                                                @click="() => router.post(`/workspaces/${workspace.id}/switch`, {}, { preserveState: false, preserveScroll: false })"
+                                                class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between"
+                                                :class="{ 'bg-gray-50 dark:bg-gray-800': currentWorkspace?.id === workspace.id }"
+                                            >
+                                                <span>{{ workspace.name }}</span>
+                                                <svg v-if="currentWorkspace?.id === workspace.id" class="h-4 w-4 text-indigo-600 dark:text-indigo-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                </svg>
+                                            </button>
+                                            <div class="border-t border-gray-200 dark:border-gray-700">
+                                                <Link
+                                                    :href="route('workspaces.create')"
+                                                    class="block px-4 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                                >
+                                                    <span class="flex items-center">
+                                                        <svg class="h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                                        </svg>
+                                                        Create new workspace
+                                                    </span>
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </Dropdown>
                             </div>
                             
                             <!-- Theme Toggle -->
@@ -248,12 +274,37 @@ onMounted(() => {
                         >
                             Permissions
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            :href="route('workspaces.index')"
-                            :active="route().current('workspaces.index')"
-                        >
-                            Workspaces
-                        </ResponsiveNavLink>
+                    </div>
+
+                    <!-- Workspace Switcher for Mobile -->
+                    <div v-if="workspaces.length > 0" class="border-t border-gray-200 dark:border-gray-700 pb-3 pt-4">
+                        <div class="px-4 pb-2">
+                            <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Current Workspace
+                            </div>
+                            <div class="text-sm font-medium text-gray-800 dark:text-gray-200 mt-1">
+                                {{ currentWorkspace?.name || 'Select Workspace' }}
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase">
+                                Switch to
+                            </div>
+                            <button
+                                v-for="workspace in workspaces.filter(w => w.id !== currentWorkspace?.id)"
+                                :key="workspace.id"
+                                @click="() => router.post(`/workspaces/${workspace.id}/switch`, {}, { preserveState: false, preserveScroll: false })"
+                                class="w-full text-left px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100"
+                            >
+                                {{ workspace.name }}
+                            </button>
+                            <Link
+                                :href="route('workspaces.create')"
+                                class="block px-4 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            >
+                                + Create new workspace
+                            </Link>
+                        </div>
                     </div>
 
                     <!-- Responsive Settings Options -->

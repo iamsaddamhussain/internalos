@@ -34,6 +34,7 @@ const addField = () => {
         label: '',
         type: 'text',
         required: false,
+        multiple: false,
         options: [],
         optionsString: '', // Add temporary string for input
         default_value: null,
@@ -245,21 +246,35 @@ const submit = () => {
                                     </div>
 
                                     <!-- Relation Collection Selector -->
-                                    <div v-if="field.type === 'relation'" class="mt-3">
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                            Related Collection *
-                                        </label>
-                                        <select
-                                            v-model="field.relation_collection_id"
-                                            class="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm"
-                                            required
-                                        >
-                                            <option value="">Select a collection</option>
-                                            <option v-for="collection in collections" :key="collection.id" :value="collection.id">
-                                                {{ collection.icon }} {{ collection.name }}
-                                            </option>
-                                        </select>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Link records from another collection</p>
+                                    <div v-if="field.type === 'relation'" class="mt-3 space-y-3">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                Related Collection *
+                                            </label>
+                                            <select
+                                                v-model="field.relation_collection_id"
+                                                class="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm"
+                                                required
+                                            >
+                                                <option value="">Select a collection</option>
+                                                <option v-for="collection in collections" :key="collection.id" :value="collection.id">
+                                                    {{ collection.icon }} {{ collection.name }}
+                                                </option>
+                                            </select>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Link records from another collection</p>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="flex items-center">
+                                                <input
+                                                    v-model="field.multiple"
+                                                    type="checkbox"
+                                                    class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                                />
+                                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Allow multiple selection</span>
+                                            </label>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 ml-6">Enable to select multiple records (e.g., multiple employees)</p>
+                                        </div>
                                     </div>
                                 </div>
                                 

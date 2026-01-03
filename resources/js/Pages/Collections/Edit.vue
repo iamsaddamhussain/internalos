@@ -22,6 +22,7 @@ const form = useForm({
         optionsString: field.options ? field.options.join(', ') : '',
         isExisting: true, // Mark as existing field
         default_value: field.default_value ?? null,
+        multiple: field.multiple ?? false,
     })),
 });
 
@@ -42,6 +43,7 @@ const addField = () => {
         label: '',
         type: 'text',
         required: false,
+        multiple: false,
         options: [],
         optionsString: '',
         isExisting: false, // Mark as new field
@@ -258,25 +260,39 @@ const submit = () => {
                                     </div>
 
                                     <!-- Relation Collection Selector -->
-                                    <div v-if="field.type === 'relation'" class="mt-3">
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                            Related Collection *
-                                        </label>
-                                        <select
-                                            v-model="field.relation_collection_id"
-                                            class="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm"
-                                            required
-                                        >
-                                            <option value="">Select a collection</option>
-                                            <option 
-                                                v-for="col in collections.filter(c => c.id !== collection.id)" 
-                                                :key="col.id" 
-                                                :value="col.id"
+                                    <div v-if="field.type === 'relation'" class="mt-3 space-y-3">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                Related Collection *
+                                            </label>
+                                            <select
+                                                v-model="field.relation_collection_id"
+                                                class="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm"
+                                                required
                                             >
-                                                {{ col.icon }} {{ col.name }}
-                                            </option>
-                                        </select>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Link records from another collection</p>
+                                                <option value="">Select a collection</option>
+                                                <option 
+                                                    v-for="col in collections.filter(c => c.id !== collection.id)" 
+                                                    :key="col.id" 
+                                                    :value="col.id"
+                                                >
+                                                    {{ col.icon }} {{ col.name }}
+                                                </option>
+                                            </select>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Link records from another collection</p>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="flex items-center">
+                                                <input
+                                                    v-model="field.multiple"
+                                                    type="checkbox"
+                                                    class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                                />
+                                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Allow multiple selection</span>
+                                            </label>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 ml-6">Enable to select multiple records (e.g., multiple employees)</p>
+                                        </div>
                                     </div>
                                 </div>
 

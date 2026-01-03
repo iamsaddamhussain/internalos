@@ -22,7 +22,7 @@ const emit = defineEmits(['edit', 'delete']);
 
 const fields = computed(() => props.schema.fields || []);
 
-const formatValue = (value, type, fieldId) => {
+const formatValue = (value, type, fieldId, field) => {
     if (value === null || value === undefined) return '-';
     
     switch (type) {
@@ -33,7 +33,15 @@ const formatValue = (value, type, fieldId) => {
         case 'number':
             return Number(value).toLocaleString();
         case 'relation':
-            // Find the related record display name
+            // Check if multiple selection
+            if (field.multiple && Array.isArray(value)) {
+                const displayNames = value.map(id => {
+                    const relatedRecord = props.relatedData[fieldId]?.records?.find(r => r.id === id);
+                    return relatedRecord ? relatedRecord.display : id;
+                });
+                return displayNames.join(', ');
+            }
+            // Single selection
             const relatedRecord = props.relatedData[fieldId]?.records?.find(r => r.id === value);
             return relatedRecord ? relatedRecord.display : '-';
         default:
@@ -66,7 +74,7 @@ const formatValue = (value, type, fieldId) => {
                         :key="field.id"
                         class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100"
                     >
-                        {{ formatValue(record.data[field.id], field.type, field.id) }}
+                        {{ formatValue(record.data[field.id], field.type, field.id, field) }}
                     </td>
                     <td v-if="canEdit || canDelete" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                         <button

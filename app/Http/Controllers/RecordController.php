@@ -154,10 +154,24 @@ class RecordController extends Controller
                     break;
                 case 'relation':
                     // For relation fields, validate that the ID exists in the related collection's records
-                    if (!($field['required'] ?? false)) {
-                        $fieldRules = ['nullable', 'exists:records,id'];
+                    // Check if multiple selection is enabled
+                    if (!empty($field['multiple'])) {
+                        // Multiple selection
+                        if (!($field['required'] ?? false)) {
+                            $fieldRules = ['nullable', 'array'];
+                        } else {
+                            $fieldRules = ['required', 'array'];
+                        }
+                        $fieldRules[] = 'min:1';
+                        $rules[$field['id']] = $fieldRules;
+                        $rules[$field['id'] . '.*'] = ['exists:records,id'];
                     } else {
-                        $fieldRules = ['required', 'exists:records,id'];
+                        // Single selection
+                        if (!($field['required'] ?? false)) {
+                            $fieldRules = ['nullable', 'exists:records,id'];
+                        } else {
+                            $fieldRules = ['required', 'exists:records,id'];
+                        }
                     }
                     break;
             }
