@@ -28,6 +28,7 @@ class RolePermissionSeeder extends Seeder
                 'permissions' => Permission::whereIn('slug', [
                     'collections.create', 'collections.view', 'collections.update', 'collections.delete',
                     'records.create', 'records.view', 'records.update', 'records.delete',
+                    'activities.create', 'activities.signoff', 'activities.delete',
                     'members.view', 'members.invite', 'members.manage',
                     'workspace.manage',
                 ])->pluck('id')->toArray(),
@@ -39,6 +40,7 @@ class RolePermissionSeeder extends Seeder
                 'permissions' => Permission::whereIn('slug', [
                     'collections.view', 'collections.create', 'collections.update',
                     'records.create', 'records.view', 'records.update',
+                    'activities.create', 'activities.signoff',
                     'members.view',
                 ])->pluck('id')->toArray(),
             ],

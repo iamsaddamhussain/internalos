@@ -6,10 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Collection extends Model
 {
-    protected $fillable = ['workspace_id', 'name', 'slug', 'icon', 'description', 'schema'];
+    protected $fillable = ['workspace_id', 'name', 'slug', 'icon', 'description', 'schema', 'enable_search', 'enable_export', 'per_page'];
 
     protected $casts = [
         'schema' => 'array',
+        'enable_search' => 'boolean',
+        'enable_export' => 'boolean',
+        'per_page' => 'integer',
     ];
 
     public function workspace()

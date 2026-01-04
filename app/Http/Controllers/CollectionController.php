@@ -65,6 +65,9 @@ class CollectionController extends Controller
             'slug' => Str::slug($request->name),
             'description' => $request->description,
             'icon' => $request->icon ?? '📄',
+            'enable_search' => $request->enable_search ?? true,
+            'enable_export' => $request->enable_export ?? true,
+            'per_page' => $request->per_page ?? 10,
             'schema' => [
                 'fields' => $request->fields,
             ],
@@ -74,11 +77,23 @@ class CollectionController extends Controller
             ->with('success', 'Collection created successfully!');
     }
 
-    public function show(Collection $collection)
+    public function show(Request $request, Collection $collection)
     {
         $this->authorize('view', $collection);
 
-        $records = $collection->records()->with('creator')->latest()->get();
+        $search = $request->get('search', '');
+        $perPage = $request->get('per_page', $collection->per_page ?? 10);
+
+        $query = $collection->records()->with('creator');
+
+        // Apply search if enabled and search query exists
+        if ($collection->enable_search && $search) {
+            $query->where(function($q) use ($search) {
+                $q->whereRaw('LOWER(CAST(data AS TEXT)) LIKE ?', ['%' . strtolower($search) . '%']);
+            });
+        }
+
+        $records = $query->latest()->paginate($perPage)->withQueryString();
 
         $userWorkspace = auth()->user()->workspaces()->where('workspaces.id', $collection->workspace_id)->first();
         $userRole = $userWorkspace && $userWorkspace->pivot->role_id 
@@ -95,6 +110,10 @@ class CollectionController extends Controller
             'canEdit' => $userRole && in_array($userRole->slug, ['owner', 'admin', 'editor']),
             'canDelete' => $userRole && in_array($userRole->slug, ['owner', 'admin']),
             'relatedData' => $relatedData,
+            'filters' => [
+                'search' => $search,
+                'per_page' => $perPage,
+            ],
         ]);
     }
 
@@ -127,6 +146,9 @@ class CollectionController extends Controller
             'slug' => Str::slug($request->name),
             'description' => $request->description,
             'icon' => $request->icon ?? '📄',
+            'enable_search' => $request->enable_search ?? true,
+            'enable_export' => $request->enable_export ?? true,
+            'per_page' => $request->per_page ?? 10,
             'schema' => [
                 'fields' => $request->fields,
             ],
@@ -144,6 +166,63 @@ class CollectionController extends Controller
 
         return redirect()->route('collections.index')
             ->with('success', 'Collection deleted successfully!');
+    }
+
+    public function export(Collection $collection)
+    {
+        $this->authorize('view', $collection);
+
+        if (!$collection->enable_export) {
+            abort(403, 'Export is not enabled for this collection');
+        }
+
+        $records = $collection->records()->get();
+
+        // Prepare CSV data
+        $csvData = [];
+        $headers = [];
+        
+        // Build headers from schema
+        foreach ($collection->schema['fields'] as $field) {
+            $headers[] = $field['label'];
+        }
+        $csvData[] = $headers;
+
+        // Add records
+        foreach ($records as $record) {
+            $row = [];
+            foreach ($collection->schema['fields'] as $field) {
+                $value = $record->data[$field['id']] ?? '';
+                
+                // Handle different field types
+                if ($field['type'] === 'checkbox') {
+                    $value = $value ? 'Yes' : 'No';
+                } elseif ($field['type'] === 'relation' && is_array($value)) {
+                    $value = implode(', ', $value);
+                } elseif (is_array($value)) {
+                    $value = implode(', ', $value);
+                }
+                
+                $row[] = $value;
+            }
+            $csvData[] = $row;
+        }
+
+        // Create CSV file
+        $filename = Str::slug($collection->name) . '-' . date('Y-m-d') . '.csv';
+        
+        $callback = function() use ($csvData) {
+            $file = fopen('php://output', 'w');
+            foreach ($csvData as $row) {
+                fputcsv($file, $row);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 
     private function getRelatedDataForDisplay(Collection $collection)

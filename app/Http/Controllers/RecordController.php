@@ -12,6 +12,77 @@ class RecordController extends Controller
 {
     use AuthorizesRequests;
 
+    public function show(Collection $collection, Record $record)
+    {
+        $this->authorize('view', $record);
+
+        // Load activities with relationships
+        $activities = $record->activities()
+            ->with(['creator', 'signedOffBy'])
+            ->get()
+            ->map(function ($activity) {
+                return [
+                    'id' => $activity->id,
+                    'title' => $activity->title,
+                    'description' => $activity->description,
+                    'status' => $activity->status,
+                    'created_by' => $activity->creator->name,
+                    'created_at' => $activity->created_at->diffForHumans(),
+                    'signed_off_by' => $activity->signedOffBy?->name,
+                    'signed_off_at' => $activity->signed_off_at?->diffForHumans(),
+                    'is_signed_off' => $activity->isSignedOff(),
+                ];
+            });
+
+        // Get display label for the record
+        $displayField = collect($collection->schema['fields'])
+            ->first(fn($f) => $f['type'] === 'text');
+        
+        $recordTitle = $displayField 
+            ? ($record->data[$displayField['id']] ?? 'Untitled')
+            : 'Untitled';
+
+        // Resolve relation field values
+        $relatedData = $this->getRelatedData($collection);
+        $displayData = [];
+        
+        foreach ($collection->schema['fields'] as $field) {
+            $value = $record->data[$field['id']] ?? null;
+            
+            if ($field['type'] === 'relation' && $value !== null && isset($relatedData[$field['id']])) {
+                // Check if multiple selection
+                if (!empty($field['multiple']) && is_array($value)) {
+                    $displayNames = [];
+                    foreach ($value as $id) {
+                        $relatedRecord = collect($relatedData[$field['id']]['records'])->firstWhere('id', $id);
+                        if ($relatedRecord) {
+                            $displayNames[] = $relatedRecord['display'];
+                        }
+                    }
+                    $displayData[$field['id']] = implode(', ', $displayNames);
+                } else {
+                    // Single selection
+                    $relatedRecord = collect($relatedData[$field['id']]['records'])->firstWhere('id', $value);
+                    $displayData[$field['id']] = $relatedRecord ? $relatedRecord['display'] : $value;
+                }
+            } else if ($field['type'] === 'checkbox') {
+                $displayData[$field['id']] = $value ? 'Yes' : 'No';
+            } else if ($field['type'] === 'date' && $value) {
+                $displayData[$field['id']] = \Carbon\Carbon::parse($value)->format('M d, Y');
+            } else {
+                $displayData[$field['id']] = $value;
+            }
+        }
+
+        return Inertia::render('Records/Show', [
+            'collection' => $collection,
+            'record' => $record,
+            'recordTitle' => $recordTitle,
+            'displayData' => $displayData,
+            'activities' => $activities,
+        ]);
+    }
+
     public function create(Collection $collection)
     {
         $this->authorize('create', [Record::class, $collection]);

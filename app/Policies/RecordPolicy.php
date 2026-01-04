@@ -17,6 +17,18 @@ class RecordPolicy
         return $workspace->pivot->role_id ? \App\Models\Role::find($workspace->pivot->role_id) : null;
     }
 
+    public function view(User $user, Record $record): bool
+    {
+        $role = $this->getUserRole($user, $record->collection->workspace_id);
+        
+        if (!$role) {
+            return false;
+        }
+
+        // All roles can view records (Owner, Admin, Editor, Viewer)
+        return in_array($role->slug, ['owner', 'admin', 'editor', 'viewer']);
+    }
+
     public function create(User $user, Collection $collection): bool
     {
         $role = $this->getUserRole($user, $collection->workspace_id);

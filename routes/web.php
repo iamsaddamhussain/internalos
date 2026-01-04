@@ -93,6 +93,7 @@ Route::middleware('auth')->group(function () {
     // Collection routes (require active workspace)
     Route::middleware('workspace')->group(function () {
         Route::resource('collections', CollectionController::class);
+        Route::get('/collections/{collection}/export', [CollectionController::class, 'export'])->name('collections.export');
         
         // Member management
         Route::resource('members', MemberController::class)->only(['index', 'destroy']);
@@ -104,9 +105,15 @@ Route::middleware('auth')->group(function () {
         // Record routes
         Route::get('/collections/{collection}/records/create', [RecordController::class, 'create'])->name('records.create');
         Route::post('/collections/{collection}/records', [RecordController::class, 'store'])->name('records.store');
+        Route::get('/collections/{collection}/records/{record}', [RecordController::class, 'show'])->name('records.show');
         Route::get('/collections/{collection}/records/{record}/edit', [RecordController::class, 'edit'])->name('records.edit');
         Route::put('/collections/{collection}/records/{record}', [RecordController::class, 'update'])->name('records.update');
         Route::delete('/collections/{collection}/records/{record}', [RecordController::class, 'destroy'])->name('records.destroy');
+        
+        // Activity routes
+        Route::post('/records/{record}/activities', [\App\Http\Controllers\ActivityController::class, 'store'])->name('activities.store');
+        Route::post('/activities/{activity}/sign-off', [\App\Http\Controllers\ActivityController::class, 'signOff'])->name('activities.sign-off');
+        Route::delete('/activities/{activity}', [\App\Http\Controllers\ActivityController::class, 'destroy'])->name('activities.destroy');
         
         // Admin - Permission Management (Owner only)
         Route::get('/admin/permissions', [RolePermissionController::class, 'index'])->name('admin.permissions');

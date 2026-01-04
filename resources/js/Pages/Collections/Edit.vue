@@ -17,6 +17,9 @@ const form = useForm({
     name: props.collection.name,
     description: props.collection.description || '',
     icon: props.collection.icon || '📄',
+    enable_search: props.collection.enable_search ?? true,
+    enable_export: props.collection.enable_export ?? true,
+    per_page: props.collection.per_page ?? 10,
     fields: props.collection.schema.fields.map(field => ({
         ...field,
         optionsString: field.options ? field.options.join(', ') : '',
@@ -53,6 +56,22 @@ const addField = () => {
 
 const removeField = (index) => {
     form.fields.splice(index, 1);
+};
+
+const moveFieldUp = (index) => {
+    if (index > 0) {
+        const temp = form.fields[index];
+        form.fields[index] = form.fields[index - 1];
+        form.fields[index - 1] = temp;
+    }
+};
+
+const moveFieldDown = (index) => {
+    if (index < form.fields.length - 1) {
+        const temp = form.fields[index];
+        form.fields[index] = form.fields[index + 1];
+        form.fields[index + 1] = temp;
+    }
 };
 
 const updateFieldOptions = (field, value) => {
@@ -139,6 +158,57 @@ const submit = () => {
                             </div>
                         </div>
 
+                        <!-- Collection Features -->
+                        <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                            <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Collection Features</h3>
+                            
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <label class="flex items-center cursor-pointer">
+                                            <input
+                                                v-model="form.enable_search"
+                                                type="checkbox"
+                                                class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                            />
+                                            <span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">Enable Search</span>
+                                        </label>
+                                        <p class="ml-7 text-xs text-gray-500 dark:text-gray-400">Allow searching through records in this collection</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <label class="flex items-center cursor-pointer">
+                                            <input
+                                                v-model="form.enable_export"
+                                                type="checkbox"
+                                                class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                            />
+                                            <span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">Enable Export</span>
+                                        </label>
+                                        <p class="ml-7 text-xs text-gray-500 dark:text-gray-400">Allow exporting records to CSV</p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Records Per Page
+                                    </label>
+                                    <select
+                                        v-model.number="form.per_page"
+                                        class="w-48 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                                    >
+                                        <option :value="10">10</option>
+                                        <option :value="20">20</option>
+                                        <option :value="50">50</option>
+                                        <option :value="100">100</option>
+                                    </select>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Default number of records to display per page</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Fields -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
@@ -163,7 +233,33 @@ const submit = () => {
                                     class="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
                                 >
                                     <div class="flex justify-between items-start mb-3">
-                                        <h4 class="font-medium text-gray-900 dark:text-gray-100">Field {{ index + 1 }}</h4>
+                                        <div class="flex items-center gap-2">
+                                            <div class="flex flex-col gap-1">
+                                                <button
+                                                    type="button"
+                                                    @click="moveFieldUp(index)"
+                                                    :disabled="index === 0"
+                                                    class="p-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                                                    title="Move up"
+                                                >
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                                                    </svg>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    @click="moveFieldDown(index)"
+                                                    :disabled="index === form.fields.length - 1"
+                                                    class="p-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
+                                                    title="Move down"
+                                                >
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <h4 class="font-medium text-gray-900 dark:text-gray-100">Field {{ index + 1 }}</h4>
+                                        </div>
                                         <button
                                             type="button"
                                             @click="removeField(index)"

@@ -65,6 +65,26 @@ class PermissionSeeder extends Seeder
                 'description' => 'Delete records from collections'
             ],
 
+            // Activity Permissions
+            [
+                'name' => 'Create Activities',
+                'slug' => 'activities.create',
+                'module' => 'activities',
+                'description' => 'Add activities to records'
+            ],
+            [
+                'name' => 'Sign Off Activities',
+                'slug' => 'activities.signoff',
+                'module' => 'activities',
+                'description' => 'Sign off activities on records'
+            ],
+            [
+                'name' => 'Delete Activities',
+                'slug' => 'activities.delete',
+                'module' => 'activities',
+                'description' => 'Delete activities from records'
+            ],
+
             // Member Permissions
             [
                 'name' => 'View Members',
