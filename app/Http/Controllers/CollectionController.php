@@ -97,8 +97,14 @@ class CollectionController extends Controller
 
         $userWorkspace = auth()->user()->workspaces()->where('workspaces.id', $collection->workspace_id)->first();
         $userRole = $userWorkspace && $userWorkspace->pivot->role_id 
-            ? \App\Models\Role::find($userWorkspace->pivot->role_id) 
+            ? \App\Models\Role::with('permissions')->find($userWorkspace->pivot->role_id) 
             : null;
+
+        // Check actual permissions from role
+        $permissions = [];
+        if ($userRole) {
+            $permissions = $userRole->permissions->pluck('slug')->toArray();
+        }
 
         $relatedData = $this->getRelatedDataForDisplay($collection);
 
@@ -106,9 +112,10 @@ class CollectionController extends Controller
             'collection' => $collection,
             'records' => $records,
             'userRole' => $userRole,
-            'canCreate' => $userRole && in_array($userRole->slug, ['owner', 'admin', 'editor']),
-            'canEdit' => $userRole && in_array($userRole->slug, ['owner', 'admin', 'editor']),
-            'canDelete' => $userRole && in_array($userRole->slug, ['owner', 'admin']),
+            'canCreate' => in_array('records.create', $permissions),
+            'canView' => in_array('records.view', $permissions),
+            'canEdit' => in_array('records.update', $permissions),
+            'canDelete' => in_array('records.delete', $permissions),
             'relatedData' => $relatedData,
             'filters' => [
                 'search' => $search,

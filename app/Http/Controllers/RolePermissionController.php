@@ -30,6 +30,7 @@ class RolePermissionController extends Controller
         return Inertia::render('Admin/Permissions', [
             'roles' => $roles,
             'permissions' => $groupedPermissions,
+            'userRoleSlug' => $userRole->slug,
         ]);
     }
 

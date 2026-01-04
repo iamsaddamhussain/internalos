@@ -9,6 +9,7 @@ const props = defineProps({
     records: Object,
     userRole: Object,
     canCreate: Boolean,
+    canView: Boolean,
     canEdit: Boolean,
     canDelete: Boolean,
     relatedData: {
@@ -111,6 +112,7 @@ const exportRecords = () => {
                     <DynamicTable
                         :schema="collection.schema"
                         :records="records.data"
+                        :canView="canView"
                         :canEdit="canEdit"
                         :canDelete="canDelete"
                         :relatedData="relatedData"

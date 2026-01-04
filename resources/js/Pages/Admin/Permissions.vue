@@ -6,9 +6,12 @@ import { ref } from 'vue';
 const props = defineProps({
     roles: Array,
     permissions: Object,
+    userRoleSlug: String,
 });
 
-const selectedRole = ref(props.roles[0]);
+const defaultRole = props.roles.find(r => r.slug === props.userRoleSlug) || props.roles[0];
+
+const selectedRole = ref(defaultRole);
 const form = useForm({
     permissions: selectedRole.value.permissions.map(p => p.id),
 });

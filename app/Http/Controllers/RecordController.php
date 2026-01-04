@@ -74,12 +74,28 @@ class RecordController extends Controller
             }
         }
 
+        // Get user permissions
+        $userWorkspace = auth()->user()->workspaces()->where('workspaces.id', $collection->workspace_id)->first();
+        $userRole = $userWorkspace && $userWorkspace->pivot->role_id 
+            ? \App\Models\Role::with('permissions')->find($userWorkspace->pivot->role_id) 
+            : null;
+
+        $permissions = [];
+        if ($userRole) {
+            $permissions = $userRole->permissions->pluck('slug')->toArray();
+        }
+
         return Inertia::render('Records/Show', [
             'collection' => $collection,
             'record' => $record,
             'recordTitle' => $recordTitle,
             'displayData' => $displayData,
             'activities' => $activities,
+            'canEdit' => in_array('records.update', $permissions),
+            'canDelete' => in_array('records.delete', $permissions),
+            'canCreateActivity' => in_array('activities.create', $permissions),
+            'canSignOffActivity' => in_array('activities.signoff', $permissions),
+            'canDeleteActivity' => in_array('activities.delete', $permissions),
         ]);
     }
 

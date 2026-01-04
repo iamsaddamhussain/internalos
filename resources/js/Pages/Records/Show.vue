@@ -9,6 +9,11 @@ const props = defineProps({
     recordTitle: String,
     displayData: Object,
     activities: Array,
+    canEdit: Boolean,
+    canDelete: Boolean,
+    canCreateActivity: Boolean,
+    canSignOffActivity: Boolean,
+    canDeleteActivity: Boolean,
 });
 
 const showActivityForm = ref(false);
@@ -69,6 +74,7 @@ const getStatusColor = (status) => {
                 </div>
                 <div class="flex space-x-3">
                     <a
+                        v-if="canEdit"
                         :href="route('records.edit', [collection.id, record.id])"
                         class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md font-semibold text-xs text-gray-700 dark:text-gray-300 uppercase tracking-widest shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none"
                     >
@@ -109,6 +115,7 @@ const getStatusColor = (status) => {
                         <div class="flex items-center justify-between mb-6">
                             <h3 class="text-lg font-semibold">Activity</h3>
                             <button
+                                v-if="canCreateActivity"
                                 @click="showActivityForm = !showActivityForm"
                                 class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700"
                             >
@@ -220,13 +227,14 @@ const getStatusColor = (status) => {
 
                                     <div class="flex items-center space-x-2 ml-4">
                                         <button
-                                            v-if="!activity.is_signed_off && activity.status !== 'done'"
+                                            v-if="canSignOffActivity && !activity.is_signed_off && activity.status !== 'done'"
                                             @click="signOffActivity(activity.id)"
                                             class="px-3 py-1 text-xs font-medium text-green-600 dark:text-green-400 border border-green-600 dark:border-green-400 rounded hover:bg-green-50 dark:hover:bg-green-900"
                                         >
                                             Sign Off
                                         </button>
                                         <button
+                                            v-if="canDeleteActivity"
                                             @click="deleteActivity(activity.id)"
                                             class="p-1 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900 rounded"
                                         >

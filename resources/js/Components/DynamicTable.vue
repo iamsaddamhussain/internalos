@@ -4,6 +4,10 @@ import { computed } from 'vue';
 const props = defineProps({
     schema: Object,
     records: Array,
+    canView: {
+        type: Boolean,
+        default: true,
+    },
     canEdit: {
         type: Boolean,
         default: true,
@@ -62,7 +66,7 @@ const formatValue = (value, type, fieldId, field) => {
                     >
                         {{ field.label }}
                     </th>
-                    <th v-if="canEdit || canDelete" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th v-if="canView || canEdit || canDelete" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Actions
                     </th>
                 </tr>
@@ -76,9 +80,10 @@ const formatValue = (value, type, fieldId, field) => {
                     >
                         {{ formatValue(record.data[field.id], field.type, field.id, field) }}
                     </td>
-                    <td v-if="canEdit || canDelete" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td v-if="canView || canEdit || canDelete" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div class="flex justify-end gap-2">
                             <button
+                                v-if="canView"
                                 @click="emit('view', record)"
                                 class="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
                             >
