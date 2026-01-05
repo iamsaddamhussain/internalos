@@ -7,6 +7,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecordController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\WorkspaceController;
+use App\Http\Controllers\Admin\SaasAdminController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -25,6 +26,11 @@ Route::get('/invitations/{token}/accept', [InvitationController::class, 'show'])
 Route::post('/invitations/{token}/accept', [InvitationController::class, 'accept'])->name('invitations.accept');
 
 Route::get('/dashboard', function () {
+    // Super Admin redirect
+    if (auth()->user()->is_super_admin) {
+        return redirect()->route('saas.admin.dashboard');
+    }
+
     $workspace = session('workspace_id') ? \App\Models\Workspace::find(session('workspace_id')) : null;
     $userRole = null;
     $stats = [
@@ -119,6 +125,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin/permissions', [RolePermissionController::class, 'index'])->name('admin.permissions');
         Route::put('/admin/permissions/{role}', [RolePermissionController::class, 'updateRolePermissions'])->name('admin.permissions.update');
     });
+});
+
+// SAAS Admin Routes (Super Admin Dashboard)
+Route::middleware('auth')->prefix('admin')->group(function () {
+    Route::get('/dashboard', [SaasAdminController::class, 'dashboard'])->name('saas.admin.dashboard');
 });
 
 require __DIR__.'/auth.php';

@@ -12,6 +12,7 @@ import { useTheme } from '@/composables/useTheme';
 const showingNavigationDropdown = ref(false);
 const page = usePage();
 
+const isSuperAdmin = computed(() => page.props.auth?.user?.is_super_admin || false);
 const workspaces = computed(() => page.props.workspaces || []);
 const currentWorkspace = computed(() => page.props.currentWorkspace || null);
 const userRole = computed(() => page.props.userRole || null);
@@ -47,12 +48,13 @@ onMounted(() => {
                     <div class="flex h-16 justify-between">
                         <div class="flex">
                             <!-- Logo -->
-                            <div class="flex shrink-0 items-center">
+                            <div class="flex shrink-0 items-center gap-3">
                                 <Link :href="route('dashboard')">
                                     <ApplicationLogo
                                         class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200"
                                     />
                                 </Link>
+                                <span class="text-xl font-semibold text-gray-800 dark:text-gray-200">Internal OS</span>
                             </div>
 
                             <!-- Navigation Links -->
@@ -60,37 +62,46 @@ onMounted(() => {
                                 class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex"
                             >
                                 <NavLink
-                                    :href="route('dashboard')"
-                                    :active="route().current('dashboard')"
+                                    v-if="isSuperAdmin"
+                                    :href="route('saas.admin.dashboard')"
+                                    :active="route().current('saas.admin.dashboard')"
                                 >
                                     Dashboard
                                 </NavLink>
-                                <NavLink
-                                    :href="route('collections.index')"
-                                    :active="route().current('collections.*')"
-                                >
-                                    Collections
-                                </NavLink>
-                                <NavLink
-                                    v-if="canViewMembers"
-                                    :href="route('members.index')"
-                                    :active="route().current('members.*')"
-                                >
-                                    Members
-                                </NavLink>
-                                <NavLink
-                                    v-if="isOwner"
-                                    :href="route('admin.permissions')"
-                                    :active="route().current('admin.permissions')"
-                                >
-                                    Permissions
-                                </NavLink>
+                                <template v-else>
+                                    <NavLink
+                                        :href="route('dashboard')"
+                                        :active="route().current('dashboard')"
+                                    >
+                                        Dashboard
+                                    </NavLink>
+                                    <NavLink
+                                        :href="route('collections.index')"
+                                        :active="route().current('collections.*')"
+                                    >
+                                        Collections
+                                    </NavLink>
+                                    <NavLink
+                                        v-if="canViewMembers"
+                                        :href="route('members.index')"
+                                        :active="route().current('members.*')"
+                                    >
+                                        Members
+                                    </NavLink>
+                                    <NavLink
+                                        v-if="isOwner"
+                                        :href="route('admin.permissions')"
+                                        :active="route().current('admin.permissions')"
+                                    >
+                                        Permissions
+                                    </NavLink>
+                                </template>
                             </div>
                         </div>
 
                         <div class="hidden sm:ms-6 sm:flex sm:items-center space-x-4">
                             <!-- Workspace Switcher Dropdown -->
-                            <div v-if="workspaces.length > 0" class="relative">
+                            <div v-if="!isSuperAdmin && workspaces.length > 0" class="relative">
                                 <Dropdown align="right" width="64">
                                     <template #trigger>
                                         <button
@@ -249,35 +260,44 @@ onMounted(() => {
                 >
                     <div class="space-y-1 pb-3 pt-2">
                         <ResponsiveNavLink
-                            :href="route('dashboard')"
-                            :active="route().current('dashboard')"
+                            v-if="isSuperAdmin"
+                            :href="route('saas.admin.dashboard')"
+                            :active="route().current('saas.admin.dashboard')"
                         >
                             Dashboard
                         </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            :href="route('collections.index')"
-                            :active="route().current('collections.*')"
-                        >
-                            Collections
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            v-if="canViewMembers"
-                            :href="route('members.index')"
-                            :active="route().current('members.*')"
-                        >
-                            Members
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            v-if="isOwner"
-                            :href="route('admin.permissions')"
-                            :active="route().current('admin.permissions')"
-                        >
-                            Permissions
-                        </ResponsiveNavLink>
+                        <template v-else>
+                            <ResponsiveNavLink
+                                :href="route('dashboard')"
+                                :active="route().current('dashboard')"
+                            >
+                                Dashboard
+                            </ResponsiveNavLink>
+                            <ResponsiveNavLink
+                                :href="route('collections.index')"
+                                :active="route().current('collections.*')"
+                            >
+                                Collections
+                            </ResponsiveNavLink>
+                            <ResponsiveNavLink
+                                v-if="canViewMembers"
+                                :href="route('members.index')"
+                                :active="route().current('members.*')"
+                            >
+                                Members
+                            </ResponsiveNavLink>
+                            <ResponsiveNavLink
+                                v-if="isOwner"
+                                :href="route('admin.permissions')"
+                                :active="route().current('admin.permissions')"
+                            >
+                                Permissions
+                            </ResponsiveNavLink>
+                        </template>
                     </div>
 
                     <!-- Workspace Switcher for Mobile -->
-                    <div v-if="workspaces.length > 0" class="border-t border-gray-200 dark:border-gray-700 pb-3 pt-4">
+                    <div v-if="!isSuperAdmin && workspaces.length > 0" class="border-t border-gray-200 dark:border-gray-700 pb-3 pt-4">
                         <div class="px-4 pb-2">
                             <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Current Workspace

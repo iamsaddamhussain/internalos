@@ -16,6 +16,11 @@ class SetWorkspace
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Super admins bypass workspace middleware
+        if ($request->user() && $request->user()->is_super_admin) {
+            return $next($request);
+        }
+
         $workspaceId = session('workspace_id');
 
         if (!$workspaceId) {
