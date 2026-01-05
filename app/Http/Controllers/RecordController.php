@@ -115,6 +115,13 @@ class RecordController extends Controller
     {
         $this->authorize('create', [Record::class, $collection]);
 
+        $workspace = app('workspace');
+
+        // Check plan limits
+        if (!$workspace->canAddRecord()) {
+            return back()->with('error', "You've reached your plan's record limit. Upgrade to add more records.");
+        }
+
         // Validate based on collection schema
         $rules = $this->buildValidationRules($collection->schema['fields']);
         $validated = $request->validate($rules);

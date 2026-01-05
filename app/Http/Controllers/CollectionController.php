@@ -22,10 +22,23 @@ class CollectionController extends Controller
             ? \App\Models\Role::find($userWorkspace->pivot->role_id) 
             : null;
 
+        $limits = $workspace->getPlanLimits();
+        $currentCounts = [
+            'collections' => $workspace->collections()->count(),
+            'records' => \App\Models\Record::whereIn('collection_id', $workspace->collections->pluck('id'))->count(),
+            'users' => $workspace->users()->count(),
+        ];
+
         return Inertia::render('Collections/Index', [
             'collections' => $collections,
             'userRole' => $userRole,
             'canCreate' => $userRole && in_array($userRole->slug, ['owner', 'admin', 'editor']),
+            'currentPlan' => [
+                'name' => $workspace->getPlanName(),
+                'slug' => $workspace->plan,
+                'limits' => $limits,
+                'current' => $currentCounts,
+            ],
         ]);
     }
 
@@ -46,6 +59,11 @@ class CollectionController extends Controller
         $this->authorize('create', Collection::class);
         
         $workspace = app('workspace');
+
+        // Check plan limits
+        if (!$workspace->canAddCollection()) {
+            return back()->with('error', "You've reached your plan's collection limit. Upgrade to add more collections.");
+        }
 
         $request->validate([
             'name' => 'required|string|max:150',

@@ -8,6 +8,7 @@ use App\Models\Workspace;
 use App\Models\Collection;
 use App\Models\Record;
 use App\Models\Activity;
+use App\Models\UpgradeRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -81,12 +82,60 @@ class SaasAdminController extends Controller
             ];
         });
 
+        // Upgrade Requests
+        $upgradeRequests = UpgradeRequest::with(['workspace', 'user'])
+            ->latest()
+            ->get()
+            ->map(function($request) {
+                return [
+                    'id' => $request->id,
+                    'workspace_name' => $request->workspace->name,
+                    'user_name' => $request->user->name,
+                    'user_email' => $request->user->email,
+                    'requested_plan' => $request->requested_plan,
+                    'message' => $request->message,
+                    'status' => $request->status,
+                    'created_at' => $request->created_at->format('M d, Y H:i'),
+                    'reviewed_at' => $request->reviewed_at?->format('M d, Y H:i'),
+                ];
+            });
+
+        $pendingRequestsCount = UpgradeRequest::where('status', 'pending')->count();
+
         return Inertia::render('Admin/SaasDashboard', [
             'workspaces' => $workspaces,
             'users' => $users,
             'stats' => $stats,
             'recentUsers' => $recentUsers,
             'recentWorkspaces' => $recentWorkspaces,
+            'upgradeRequests' => $upgradeRequests,
+            'pendingRequestsCount' => $pendingRequestsCount,
         ]);
+    }
+
+    public function updateUpgradeRequest(Request $request, UpgradeRequest $upgradeRequest)
+    {
+        abort_unless(auth()->user()->is_super_admin, 403);
+
+        $request->validate([
+            'status' => 'required|in:approved,rejected,completed',
+            'admin_notes' => 'nullable|string',
+        ]);
+
+        $upgradeRequest->update([
+            'status' => $request->status,
+            'admin_notes' => $request->admin_notes,
+            'reviewed_at' => now(),
+            'reviewed_by' => auth()->id(),
+        ]);
+
+        // If approved and it's premium, could auto-upgrade the workspace
+        if ($request->status === 'approved' && $upgradeRequest->requested_plan === 'premium') {
+            $upgradeRequest->workspace->update(['plan' => 'premium']);
+        } else if ($request->status === 'approved' && $upgradeRequest->requested_plan === 'ultra_premium') {
+            $upgradeRequest->workspace->update(['plan' => 'ultra_premium']);
+        }
+
+        return back()->with('success', 'Upgrade request updated successfully!');
     }
 }

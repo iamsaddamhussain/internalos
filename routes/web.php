@@ -16,8 +16,6 @@ Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
     ]);
 });
 
@@ -124,12 +122,18 @@ Route::middleware('auth')->group(function () {
         // Admin - Permission Management (Owner only)
         Route::get('/admin/permissions', [RolePermissionController::class, 'index'])->name('admin.permissions');
         Route::put('/admin/permissions/{role}', [RolePermissionController::class, 'updateRolePermissions'])->name('admin.permissions.update');
+        
+        // Plan & Billing
+        Route::get('/settings/plan', [\App\Http\Controllers\PlanController::class, 'index'])->name('plans.index');
+        Route::post('/settings/plan/upgrade', [\App\Http\Controllers\PlanController::class, 'requestUpgrade'])->name('plans.upgrade');
+        Route::post('/settings/plan/checkout', [\App\Http\Controllers\PlanController::class, 'createCheckoutSession'])->name('plans.checkout');
     });
 });
 
 // SAAS Admin Routes (Super Admin Dashboard)
 Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('/dashboard', [SaasAdminController::class, 'dashboard'])->name('saas.admin.dashboard');
+    Route::put('/upgrade-requests/{upgradeRequest}', [SaasAdminController::class, 'updateUpgradeRequest'])->name('saas.admin.upgrade-requests.update');
 });
 
 require __DIR__.'/auth.php';

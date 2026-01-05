@@ -95,6 +95,12 @@ onMounted(() => {
                                     >
                                         Permissions
                                     </NavLink>
+                                    <NavLink
+                                        :href="route('plans.index')"
+                                        :active="route().current('plans.*')"
+                                    >
+                                        Plan & Billing
+                                    </NavLink>
                                 </template>
                             </div>
                         </div>
@@ -292,6 +298,12 @@ onMounted(() => {
                                 :active="route().current('admin.permissions')"
                             >
                                 Permissions
+                            </ResponsiveNavLink>
+                            <ResponsiveNavLink
+                                :href="route('plans.index')"
+                                :active="route().current('plans.*')"
+                            >
+                                Plan & Billing
                             </ResponsiveNavLink>
                         </template>
                     </div>

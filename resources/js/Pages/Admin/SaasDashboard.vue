@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
 const props = defineProps({
@@ -9,9 +9,36 @@ const props = defineProps({
     stats: Object,
     recentUsers: Array,
     recentWorkspaces: Array,
+    upgradeRequests: Array,
+    pendingRequestsCount: Number,
 });
 
 const activeTab = ref('overview');
+
+const updateRequestStatus = (requestId, status, notes = '') => {
+    router.put(route('saas.admin.upgrade-requests.update', requestId), {
+        status: status,
+        admin_notes: notes,
+    });
+};
+
+const getStatusColor = (status) => {
+    switch (status) {
+        case 'pending': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+        case 'approved': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+        case 'rejected': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+        case 'completed': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+        default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+    }
+};
+
+const getPlanBadgeColor = (plan) => {
+    switch (plan) {
+        case 'premium': return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200';
+        case 'ultra_premium': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+        default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
+    }
+};
 </script>
 
 <template>
@@ -126,6 +153,20 @@ const activeTab = ref('overview');
                             >
                                 Users ({{ users.length }})
                             </button>
+                            <button
+                                @click="activeTab = 'upgrade-requests'"
+                                :class="[
+                                    'px-6 py-4 text-sm font-medium border-b-2 transition-colors relative',
+                                    activeTab === 'upgrade-requests'
+                                        ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                                ]"
+                            >
+                                Upgrade Requests
+                                <span v-if="pendingRequestsCount > 0" class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                    {{ pendingRequestsCount }}
+                                </span>
+                            </button>
                         </nav>
                     </div>
 
@@ -234,6 +275,86 @@ const activeTab = ref('overview');
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+
+                    <!-- Upgrade Requests Tab -->
+                    <div v-if="activeTab === 'upgrade-requests'" class="p-6">
+                        <div class="mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                Upgrade Requests
+                                <span v-if="pendingRequestsCount > 0" class="ml-2 text-sm text-red-600 dark:text-red-400">
+                                    ({{ pendingRequestsCount }} pending)
+                                </span>
+                            </h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                Manage customer upgrade requests and contact messages
+                            </p>
+                        </div>
+
+                        <div v-if="upgradeRequests.length === 0" class="text-center py-12">
+                            <p class="text-gray-500 dark:text-gray-400">No upgrade requests yet</p>
+                        </div>
+
+                        <div v-else class="space-y-4">
+                            <div
+                                v-for="request in upgradeRequests"
+                                :key="request.id"
+                                class="border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-md transition"
+                            >
+                                <div class="flex items-start justify-between mb-4">
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-3 mb-2">
+                                            <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                                {{ request.workspace_name }}
+                                            </h4>
+                                            <span :class="['px-3 py-1 rounded-full text-xs font-medium', getPlanBadgeColor(request.requested_plan)]">
+                                                {{ request.requested_plan === 'premium' ? 'Premium' : 'Ultra Premium' }}
+                                            </span>
+                                            <span :class="['px-3 py-1 rounded-full text-xs font-medium', getStatusColor(request.status)]">
+                                                {{ request.status.charAt(0).toUpperCase() + request.status.slice(1) }}
+                                            </span>
+                                        </div>
+                                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                                            <p><strong>Contact:</strong> {{ request.user_name }} ({{ request.user_email }})</p>
+                                            <p class="mt-1"><strong>Requested:</strong> {{ request.created_at }}</p>
+                                            <p v-if="request.reviewed_at" class="mt-1"><strong>Reviewed:</strong> {{ request.reviewed_at }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div v-if="request.message" class="mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                    <p class="text-sm text-gray-700 dark:text-gray-300">
+                                        <strong class="block mb-1">Customer Message:</strong>
+                                        {{ request.message }}
+                                    </p>
+                                </div>
+
+                                <div v-if="request.status === 'pending'" class="flex gap-3">
+                                    <button
+                                        @click="updateRequestStatus(request.id, 'approved')"
+                                        class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition"
+                                    >
+                                        ✅ Approve & Upgrade
+                                    </button>
+                                    <button
+                                        @click="updateRequestStatus(request.id, 'rejected')"
+                                        class="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition"
+                                    >
+                                        ❌ Reject
+                                    </button>
+                                    <button
+                                        @click="updateRequestStatus(request.id, 'completed')"
+                                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition"
+                                    >
+                                        ✔️ Mark Completed
+                                    </button>
+                                </div>
+
+                                <div v-else class="text-sm text-gray-600 dark:text-gray-400 italic">
+                                    Request {{ request.status }}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

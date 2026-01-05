@@ -42,6 +42,11 @@ class InvitationController extends Controller
             
         abort_unless($userRole && in_array($userRole->slug, ['owner', 'admin']), 403);
 
+        // Check plan limits
+        if (!$workspace->canAddUser()) {
+            return back()->with('error', "You've reached your plan's user limit. Upgrade to add more team members.");
+        }
+
         $request->validate([
             'email' => 'required|email',
             'role_id' => 'required|exists:roles,id',

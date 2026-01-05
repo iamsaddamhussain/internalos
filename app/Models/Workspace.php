@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasPlanLimits;
 
 class Workspace extends Model
 {
-    use HasUuids;
+    use HasUuids, HasPlanLimits;
 
-    protected $fillable = ['name', 'slug', 'owner_id'];
+    protected $fillable = ['name', 'slug', 'owner_id', 'plan'];
 
     public function users()
     {
