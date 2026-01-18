@@ -20,11 +20,31 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    sortField: {
+        type: String,
+        default: 'created_at',
+    },
+    sortDirection: {
+        type: String,
+        default: 'desc',
+    },
 });
 
-const emit = defineEmits(['view', 'edit', 'delete']);
+const emit = defineEmits(['view', 'edit', 'delete', 'sort']);
 
 const fields = computed(() => props.schema.fields || []);
+
+const isSortable = (field) => {
+    // All field types except checkbox can be sorted
+    return field.type !== 'checkbox';
+};
+
+const getSortIcon = (fieldId) => {
+    if (props.sortField !== fieldId) {
+        return null; // No icon when not sorted
+    }
+    return props.sortDirection === 'asc' ? '↑' : '↓';
+};
 
 const formatValue = (value, type, fieldId, field) => {
     if (value === null || value === undefined) return '-';
@@ -62,9 +82,46 @@ const formatValue = (value, type, fieldId, field) => {
                     <th
                         v-for="field in fields"
                         :key="field.id"
-                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                        :class="[
+                            'px-6 py-3 text-left text-xs font-medium uppercase tracking-wider',
+                            isSortable(field) ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 select-none' : '',
+                            sortField === field.id ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'
+                        ]"
+                        @click="isSortable(field) ? emit('sort', field.id) : null"
                     >
-                        {{ field.label }}
+                        <div class="flex items-center gap-2">
+                            <span>{{ field.label }}</span>
+                            <svg 
+                                v-if="isSortable(field)" 
+                                class="w-4 h-4 transition-opacity"
+                                :class="sortField === field.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-50'"
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                            >
+                                <path 
+                                    v-if="sortField === field.id && sortDirection === 'asc'"
+                                    stroke-linecap="round" 
+                                    stroke-linejoin="round" 
+                                    stroke-width="2" 
+                                    d="M5 15l7-7 7 7"
+                                />
+                                <path 
+                                    v-else-if="sortField === field.id && sortDirection === 'desc'"
+                                    stroke-linecap="round" 
+                                    stroke-linejoin="round" 
+                                    stroke-width="2" 
+                                    d="M19 9l-7 7-7-7"
+                                />
+                                <path 
+                                    v-else
+                                    stroke-linecap="round" 
+                                    stroke-linejoin="round" 
+                                    stroke-width="2" 
+                                    d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                                />
+                            </svg>
+                        </div>
                     </th>
                     <th v-if="canView || canEdit || canDelete" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Actions

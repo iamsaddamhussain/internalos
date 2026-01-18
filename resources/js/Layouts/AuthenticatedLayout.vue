@@ -30,6 +30,14 @@ const isOwner = computed(() => {
     return userRole.value.slug === 'owner';
 });
 
+// Check if user can manage automations (owner or admin)
+const canManageAutomations = computed(() => {
+    if (!userRole.value) return false;
+    return ['owner', 'admin'].includes(userRole.value.slug);
+});
+
+const workspace = computed(() => currentWorkspace.value);
+
 const { initTheme } = useTheme();
 
 onMounted(() => {
@@ -80,6 +88,13 @@ onMounted(() => {
                                         :active="route().current('collections.*')"
                                     >
                                         Collections
+                                    </NavLink>
+                                    <NavLink
+                                        v-if="isOwner || canManageAutomations"
+                                        :href="route('automations.index')"
+                                        :active="route().current('automations.*')"
+                                    >
+                                        Automations
                                     </NavLink>
                                     <NavLink
                                         v-if="canViewMembers"
@@ -284,6 +299,13 @@ onMounted(() => {
                                 :active="route().current('collections.*')"
                             >
                                 Collections
+                            </ResponsiveNavLink>
+                            <ResponsiveNavLink
+                                v-if="isOwner || canManageAutomations"
+                                :href="route('automations.index')"
+                                :active="route().current('automations.*')"
+                            >
+                                Automations
                             </ResponsiveNavLink>
                             <ResponsiveNavLink
                                 v-if="canViewMembers"

@@ -7,6 +7,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RecordController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\WorkspaceController;
+use App\Http\Controllers\AutomationController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\SaasAdminController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -98,6 +100,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware('workspace')->group(function () {
         Route::resource('collections', CollectionController::class);
         Route::get('/collections/{collection}/export', [CollectionController::class, 'export'])->name('collections.export');
+        Route::get('/collections/{collection}/template', [CollectionController::class, 'downloadTemplate'])->name('collections.template');
+        Route::post('/collections/{collection}/import', [CollectionController::class, 'import'])->name('collections.import');
         
         // Member management
         Route::resource('members', MemberController::class)->only(['index', 'destroy']);
@@ -127,7 +131,26 @@ Route::middleware('auth')->group(function () {
         Route::get('/settings/plan', [\App\Http\Controllers\PlanController::class, 'index'])->name('plans.index');
         Route::post('/settings/plan/upgrade', [\App\Http\Controllers\PlanController::class, 'requestUpgrade'])->name('plans.upgrade');
         Route::post('/settings/plan/checkout', [\App\Http\Controllers\PlanController::class, 'createCheckoutSession'])->name('plans.checkout');
+        
+        // Automation routes
+        Route::get('/automations', [AutomationController::class, 'index'])->name('automations.index');
+        Route::get('/collections/{collection}/automations/create', [AutomationController::class, 'create'])->name('automations.create');
+        Route::post('/collections/{collection}/automations', [AutomationController::class, 'store'])->name('automations.store');
+        Route::get('/automations/{automation}', [AutomationController::class, 'show'])->name('automations.show');
+        Route::get('/automations/{automation}/edit', [AutomationController::class, 'edit'])->name('automations.edit');
+        Route::put('/automations/{automation}', [AutomationController::class, 'update'])->name('automations.update');
+        Route::post('/automations/{automation}/toggle', [AutomationController::class, 'toggle'])->name('automations.toggle');
+        Route::delete('/automations/{automation}', [AutomationController::class, 'destroy'])->name('automations.destroy');
     });
+});
+
+// Notification routes (not workspace-specific)
+Route::middleware('auth')->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 });
 
 // SAAS Admin Routes (Super Admin Dashboard)

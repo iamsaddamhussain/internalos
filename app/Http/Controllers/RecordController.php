@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Collection;
 use App\Models\Record;
+use App\Services\AutomationScheduler;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -132,6 +133,9 @@ class RecordController extends Controller
             'created_by' => auth()->id(),
         ]);
 
+        // Trigger automations for record_created event
+        app(AutomationScheduler::class)->processEvent('record_created', $record);
+
         return redirect()->route('collections.show', $collection->id)->with('success', 'Record created successfully!');
     }
 
@@ -156,9 +160,15 @@ class RecordController extends Controller
         $rules = $this->buildValidationRules($collection->schema['fields']);
         $validated = $request->validate($rules);
 
+        // Track changes for automation triggers
+        $changes = array_diff_assoc($validated, $record->data);
+
         $record->update([
             'data' => $validated,
         ]);
+
+        // Trigger automations for record_updated event
+        app(AutomationScheduler::class)->processEvent('record_updated', $record, $changes);
 
         return redirect()->route('collections.show', $collection->id)->with('success', 'Record updated successfully!');
     }

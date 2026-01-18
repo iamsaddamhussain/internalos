@@ -19,6 +19,7 @@ const form = useForm({
     icon: props.collection.icon || '📄',
     enable_search: props.collection.enable_search ?? true,
     enable_export: props.collection.enable_export ?? true,
+    enable_import: props.collection.enable_import ?? true,
     per_page: props.collection.per_page ?? 10,
     fields: props.collection.schema.fields.map(field => ({
         ...field,
@@ -188,6 +189,20 @@ const submit = () => {
                                             <span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">Enable Export</span>
                                         </label>
                                         <p class="ml-7 text-xs text-gray-500 dark:text-gray-400">Allow exporting records to CSV</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center justify-between">
+                                    <div class="flex-1">
+                                        <label class="flex items-center cursor-pointer">
+                                            <input
+                                                v-model="form.enable_import"
+                                                type="checkbox"
+                                                class="rounded border-gray-300 dark:border-gray-600 text-indigo-600 shadow-sm focus:ring-indigo-500"
+                                            />
+                                            <span class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">Enable Import</span>
+                                        </label>
+                                        <p class="ml-7 text-xs text-gray-500 dark:text-gray-400">Allow importing records from Excel</p>
                                     </div>
                                 </div>
 

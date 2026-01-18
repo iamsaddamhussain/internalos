@@ -12,7 +12,13 @@ const props = defineProps({
     },
 });
 
-const form = useForm({ ...props.record.data });
+// Initialize form with ALL fields from schema, using existing record data where available
+const formData = {};
+props.collection.schema.fields.forEach(field => {
+    formData[field.id] = props.record.data[field.id] ?? field.default_value ?? null;
+});
+
+const form = useForm(formData);
 
 const submit = () => {
     form.put(route('records.update', { collection: props.collection.id, record: props.record.id }), {
